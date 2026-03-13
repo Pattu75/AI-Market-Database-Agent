@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# ## Query Functions
+# ## Financial Data Storage (queries.py)
 # 
+# All market data is stored in a relational database architecture composed of multiple tables:
+# - tickers stores tracked assets
+# - price_daily stores historical daily market prices
+# - portfolio_runs stores portfolio simulation results
+# - portfolio_weights stores optimal asset allocations
 # 
+# This structure allows efficient querying, analysis, and portfolio evaluation.
 
 # In[ ]:
 

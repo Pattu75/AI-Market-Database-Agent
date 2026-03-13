@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# ## Feature Engineering
+# ## Financial Analytics (compute_features.py)
 # 
-# **compute_features.py**
+# The system computes several quantitative indicators, including:
+# - Daily returns
+# - Moving averages (20, 50, 200 days)
+# - Rolling volatility
+# - Cumulative returns
+# 
+# These features support quantitative trading and investment analysis.
+# 
 
 # In[ ]:
 

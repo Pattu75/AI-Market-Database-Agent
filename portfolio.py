@@ -1,9 +1,18 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# ## Portfolio Analytics
+# ## 5. Portfolio Construction (portfolio.py)
 # 
-# **portfolio.py**
+# The project includes a portfolio analytics engine that allows:
+# - Equal-weighted portfolio construction
+# - Portfolio performance evaluation
+# - Risk and return measurement
+# - Key metrics computed include:
+# - Mean return
+# - Standard deviation
+# - Sharpe ratio
+# - Cumulative return
+# 
 
 # In[ ]:
 

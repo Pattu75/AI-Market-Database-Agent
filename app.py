@@ -10,17 +10,13 @@ import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="AI Market Data Agent", page_icon="📈", layout="wide")
 st.title("AI Market Database Agent")
+st.caption("Built by Zakariya Boutayeb — Data Science & Quantitative Finance")
 
 # =========================================================
 # SIDEBAR - DATABASE CREDENTIALS
 # =========================================================
-st.sidebar.header("DB Connection")
 
-DB_HOST = st.sidebar.text_input("Host", value="localhost")
-DB_PORT = st.sidebar.number_input("Port", value=3306, step=1)
-DB_USER = st.sidebar.text_input("User", value="sqluser")
-DB_PASS = st.sidebar.text_input("Password", type="password")
-DB_NAME = st.sidebar.text_input("Database", value="marketdata")
+st.sidebar.header("Navigation")
 
 menu = st.sidebar.selectbox(
     "Menu",
@@ -40,13 +36,14 @@ menu = st.sidebar.selectbox(
 def get_connection():
     try:
         conn = mysql.connector.connect(
-            host=DB_HOST,
-            port=int(DB_PORT),
-            user=DB_USER,
-            password=DB_PASS,
-            database=DB_NAME
+            host=st.secrets["DB_HOST"],
+            port=int(st.secrets["DB_PORT"]),
+            user=st.secrets["DB_USER"],
+            password=st.secrets["DB_PASS"],
+            database=st.secrets["DB_NAME"],
         )
         return conn
+
     except Error as e:
         st.error(f"Database connection error: {e}")
         return None
