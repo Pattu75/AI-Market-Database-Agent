@@ -1,23 +1,68 @@
-# AI Market Database Agent Application
+# AI Market Database Agent
+### Financial Data Engineering & Quantitative Analytics Platform
 
-# Overview
+## Live Application
 
-The AI Market Database Agent is an end-to-end financial data platform designed to automatically retrieve, store, analyze, and visualize market data.
+Try the deployed application:
 
-It demonstrates a full data engineering and quantitative analytics pipeline, integrating market data ingestion, database storage, financial analytics, and portfolio optimization.
+🔗 https://ai-market-database-agent-2muca7kdggfkcm7ehgaenx.streamlit.app/
 
-The system combines Python, MySQL, and Streamlit to build a scalable financial data infrastructure capable of supporting investment research and algorithmic trading strategies.
+## Overview
 
-This project showcases practical skills in:
-- Financial data engineering
-- Quantitative finance
-- Database systems
-- Data analytics
-- Interactive dashboards
+The **AI Market Database Agent** is an end-to-end financial data platform designed to retrieve, store, analyze, and visualize market data.
 
-# System Architecture
+The project demonstrates a full financial data workflow that integrates:
 
-The platform follows a modular architecture:
+- **market data ingestion**
+- **relational database storage**
+- **quantitative analytics**
+- **portfolio optimization**
+- **interactive dashboarding**
+- **AI-style SQL querying**
+
+It combines **Python**, **MySQL**, and **Streamlit** to build a practical financial analytics system that can support investment research, portfolio analysis, and data-driven decision-making.
+
+## Key Features
+
+- Download historical market data from **Yahoo Finance**
+- Store market data in a **MySQL relational database**
+- Analyze returns using **Pandas** and **NumPy**
+- Compare multiple assets across categories
+- Build equal-weight portfolios
+- Run **Monte Carlo portfolio simulations**
+- Compute **Sharpe ratio** and risk-return metrics
+- Explore the market database through an **AI SQL Agent**
+- Demonstrate advanced SQL analytics:
+  - `UNION`
+  - `IN`
+  - `ANY`
+  - `WITH`
+  - `DENSE_RANK`
+  - `ROLLUP`
+
+## Technology Stack
+
+### Programming
+- Python
+- SQL
+
+### Data & Analytics Libraries
+- Pandas
+- NumPy
+- Matplotlib
+- yfinance
+
+### Database
+- MySQL
+
+### Dashboard & Deployment
+- Streamlit
+- Streamlit Community Cloud
+
+## System Architecture
+
+The platform follows this workflow:
+
 Yahoo Finance API
         │
         ▼
@@ -71,23 +116,18 @@ The analytics engine computes key financial indicators commonly used in quantita
 
 # Portfolio Optimization
 
-The system includes a Monte Carlo simulation to identify optimal portfolio allocations.
+# Portfolio Optimization
 
-Steps:
-- Generate 10,000 of random portfolios
-- Compute expected return and volatility
-- Calculate Sharpe ratio
-- Identify the portfolio with the maximum Sharpe ratio
+The platform performs Monte Carlo portfolio simulations to identify optimal asset allocations.
 
-Example simulation:
-- 10,000 portfolios
-- random weight allocations
-- risk-return optimization
+Simulation Process:
 
-Outputs include:
-- Efficient frontier
-- Optimal weights
-- Maximum Sharpe portfolio
+1. Generate 10,000 random portfolios
+2. Assign random weight allocations
+3. Compute expected portfolio return
+4. Compute portfolio volatility
+5. Calculate the Sharpe ratio
+6. Identify the portfolio with the maximum Sharpe ratio
 
 # Interactive Dashboard
 
@@ -106,16 +146,34 @@ Example dashboard outputs:
 - risk-return scatter plots
 - optimized portfolio weights
 
+# Technology Stack
+
+Programming:
+- Python
+
+Data Science Libraries:
+- Pandas
+- NumPy
+- Matplotlib
+- yfinance
+
+Database:
+- MySQL
+
+Data Visualization:
+- Streamlit
+
+Financial Analytics:
+- Monte Carlo Simulation
+- Sharpe Ratio Optimization
+- Portfolio Risk-Return Analysis
+  
 # Author
 
-**Zakariya Boutayeb**
+Zakariya Boutayeb  
+Data Science & Quantitative Finance
 
-Fields:
-- Quantitative Finance
-- Data Science
-- Financial Analytics
-
-# Links
+Links:
 - GitHub: https://github.com/Pattu75
 - Tableau: https://public.tableau.com/app/profile/zakariya.boutayeb
-- 
+
