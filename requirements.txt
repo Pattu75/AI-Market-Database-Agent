@@ -1,6 +1,6 @@
 streamlit
+yfinance
 pandas
 numpy
-yfinance
-mysql-connector-python
 matplotlib
+mysql-connector-python
