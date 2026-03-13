@@ -5,7 +5,7 @@
 
 Try the deployed application:
 
-🔗 https://ai-market-database-agent-2muca7kdggfkcm7ehgaenx.streamlit.app/
+🔗 (https://ai-market-database-agent-2muca7kdggfkcm7ehgaenx.streamlit.app/)
 
 ## Overview
 
