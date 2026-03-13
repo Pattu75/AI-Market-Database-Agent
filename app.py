@@ -7,20 +7,24 @@ import mysql.connector
 from mysql.connector import Error
 import matplotlib.pyplot as plt
 
-
+# =========================================================
+# PAGE CONFIG
+# =========================================================
 st.set_page_config(page_title="AI Market Data Agent", page_icon="📈", layout="wide")
+
 st.title("AI Market Database Agent")
+st.write("Financial Market Analytics Platform")
 st.caption("Built by Zakariya Boutayeb — Data Science & Quantitative Finance")
 
 # =========================================================
-# SIDEBAR - DATABASE CREDENTIALS
+# SIDEBAR
 # =========================================================
-
 st.sidebar.header("Navigation")
 
 menu = st.sidebar.selectbox(
     "Menu",
     [
+        "Quick Market Chart",
         "Download Market Data",
         "Latest Price",
         "Returns Analysis",
@@ -43,7 +47,6 @@ def get_connection():
             database=st.secrets["DB_NAME"],
         )
         return conn
-
     except Error as e:
         st.error(f"Database connection error: {e}")
         return None
@@ -69,23 +72,28 @@ def ensure_ticker(symbol):
 
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        INSERT INTO tickers(symbol)
-        VALUES (%s)
-        ON DUPLICATE KEY UPDATE symbol = VALUES(symbol)
-        """,
-        (symbol,)
-    )
+    try:
+        cursor.execute(
+            """
+            INSERT INTO tickers(symbol)
+            VALUES (%s)
+            ON DUPLICATE KEY UPDATE symbol = VALUES(symbol)
+            """,
+            (symbol.upper().strip(),)
+        )
 
-    cursor.execute("SELECT id FROM tickers WHERE symbol = %s", (symbol,))
-    row = cursor.fetchone()
+        cursor.execute(
+            "SELECT id FROM tickers WHERE symbol = %s",
+            (symbol.upper().strip(),)
+        )
+        row = cursor.fetchone()
+        conn.commit()
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+        return row[0] if row else None
 
-    return row[0] if row else None
+    finally:
+        cursor.close()
+        conn.close()
 
 # =========================================================
 # DOWNLOAD PRICES FROM YAHOO
@@ -123,40 +131,41 @@ def insert_prices(symbol, startdate, enddate):
 
     cursor = conn.cursor()
 
-    for _, row in df.iterrows():
-        adj_close_value = row["Adj Close"] if "Adj Close" in df.columns else row["Close"]
+    try:
+        for _, row in df.iterrows():
+            adj_close_value = row["Adj Close"] if "Adj Close" in df.columns else row["Close"]
 
-        cursor.execute(
-            """
-            INSERT INTO price_daily
-            (ticker_id, dt, open, high, low, close, adj_close, volume)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-            ON DUPLICATE KEY UPDATE
-                open = VALUES(open),
-                high = VALUES(high),
-                low = VALUES(low),
-                close = VALUES(close),
-                adj_close = VALUES(adj_close),
-                volume = VALUES(volume)
-            """,
-            (
-                ticker_id,
-                row["Date"],
-                row["Open"],
-                row["High"],
-                row["Low"],
-                row["Close"],
-                adj_close_value,
-                row["Volume"]
+            cursor.execute(
+                """
+                INSERT INTO price_daily
+                (ticker_id, dt, open, high, low, close, adj_close, volume)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                ON DUPLICATE KEY UPDATE
+                    open = VALUES(open),
+                    high = VALUES(high),
+                    low = VALUES(low),
+                    close = VALUES(close),
+                    adj_close = VALUES(adj_close),
+                    volume = VALUES(volume)
+                """,
+                (
+                    ticker_id,
+                    row["Date"],
+                    row["Open"],
+                    row["High"],
+                    row["Low"],
+                    row["Close"],
+                    adj_close_value,
+                    row["Volume"]
+                )
             )
-        )
 
-    conn.commit()
-    rows_inserted = len(df)
-    cursor.close()
-    conn.close()
+        conn.commit()
+        return len(df)
 
-    return rows_inserted
+    finally:
+        cursor.close()
+        conn.close()
 
 # =========================================================
 # QUERY: LATEST PRICE
@@ -167,7 +176,7 @@ def get_latest_price(symbol):
         return pd.DataFrame()
 
     query = """
-    SELECT p.dt, p.close
+    SELECT p.dt, p.close, p.adj_close
     FROM price_daily p
     JOIN tickers t ON p.ticker_id = t.id
     WHERE t.symbol = %s
@@ -175,9 +184,11 @@ def get_latest_price(symbol):
     LIMIT 1
     """
 
-    df = pd.read_sql(query, conn, params=[symbol])
-    conn.close()
-    return df
+    try:
+        df = pd.read_sql(query, conn, params=[symbol.upper().strip()])
+        return df
+    finally:
+        conn.close()
 
 # =========================================================
 # QUERY: RETURNS
@@ -195,24 +206,30 @@ def get_returns(symbol):
     ORDER BY p.dt
     """
 
-    df = pd.read_sql(query, conn, params=[symbol])
-    conn.close()
+    try:
+        df = pd.read_sql(query, conn, params=[symbol.upper().strip()])
+        if df.empty:
+            return df
 
-    if df.empty:
+        df["returns"] = df["adj_close"].pct_change(fill_method=None)
         return df
 
-    df["returns"] = df["adj_close"].pct_change()
-    return df
+    finally:
+        conn.close()
 
 # =========================================================
-# QUERY: PRICE COMPARISON FOR MULTIPLE TICKERS
+# QUERY: PRICE MATRIX
 # =========================================================
 def get_price_matrix(stock_list, startdate, enddate):
     conn = get_connection()
     if conn is None:
         return pd.DataFrame()
 
-    placeholders = ",".join(["%s"] * len(stock_list))
+    clean_list = [s.upper().strip() for s in stock_list if s.strip()]
+    if not clean_list:
+        return pd.DataFrame()
+
+    placeholders = ",".join(["%s"] * len(clean_list))
     query = f"""
         SELECT t.symbol, p.dt, p.adj_close
         FROM price_daily p
@@ -221,19 +238,41 @@ def get_price_matrix(stock_list, startdate, enddate):
           AND p.dt BETWEEN %s AND %s
         ORDER BY p.dt
     """
-    params = stock_list + [startdate, enddate]
-    df = pd.read_sql(query, conn, params=params)
-    conn.close()
+    params = clean_list + [startdate, enddate]
 
-    if df.empty:
-        return pd.DataFrame()
+    try:
+        df = pd.read_sql(query, conn, params=params)
+        if df.empty:
+            return pd.DataFrame()
 
-    return df.pivot(index="dt", columns="symbol", values="adj_close")
+        return df.pivot(index="dt", columns="symbol", values="adj_close")
+
+    finally:
+        conn.close()
 
 # =========================================================
-# PAGE 1 - DOWNLOAD MARKET DATA
+# PAGE 1 - QUICK MARKET CHART
 # =========================================================
-if menu == "Download Market Data":
+if menu == "Quick Market Chart":
+    st.subheader("Quick Market Chart")
+
+    ticker = st.text_input("Enter Ticker", "AAPL").upper().strip()
+    chart_start = st.date_input("Chart Start Date", value=pd.to_datetime("2020-01-01"))
+
+    data = yf.download(ticker, start=chart_start, auto_adjust=False, progress=False)
+
+    if not data.empty:
+        if isinstance(data.columns, pd.MultiIndex):
+            data.columns = [c[0] for c in data.columns]
+        st.line_chart(data["Close"])
+        st.dataframe(data.tail(10), use_container_width=True)
+    else:
+        st.warning(f"No Yahoo data found for {ticker}.")
+
+# =========================================================
+# PAGE 2 - DOWNLOAD MARKET DATA
+# =========================================================
+elif menu == "Download Market Data":
     st.subheader("Download Market Data")
 
     symbols_text = st.text_area("Tickers (comma separated)", value="AMD,AAPL,MSFT,ORCL")
@@ -241,20 +280,17 @@ if menu == "Download Market Data":
     enddate = st.date_input("End Date", value=pd.to_datetime("2024-11-18"))
 
     if st.button("Download"):
-        if not DB_PASS:
-            st.warning("Please enter your database password in the sidebar.")
-        else:
-            symbols = [s.strip().upper() for s in symbols_text.split(",") if s.strip()]
-            total_rows = 0
+        symbols = [s.strip().upper() for s in symbols_text.split(",") if s.strip()]
+        total_rows = 0
 
-            for symbol in symbols:
-                rows = insert_prices(symbol, startdate, enddate)
-                total_rows += rows
+        for symbol in symbols:
+            rows = insert_prices(symbol, startdate, enddate)
+            total_rows += rows
 
-            st.success(f"Inserted/updated {total_rows} rows for {len(symbols)} tickers.")
+        st.success(f"Inserted/updated {total_rows} rows for {len(symbols)} tickers.")
 
 # =========================================================
-# PAGE 2 - LATEST PRICE
+# PAGE 3 - LATEST PRICE
 # =========================================================
 elif menu == "Latest Price":
     st.subheader("Latest Price")
@@ -269,7 +305,7 @@ elif menu == "Latest Price":
             st.dataframe(df, use_container_width=True)
 
 # =========================================================
-# PAGE 3 - RETURNS ANALYSIS
+# PAGE 4 - RETURNS ANALYSIS
 # =========================================================
 elif menu == "Returns Analysis":
     st.subheader("Returns Analysis")
@@ -284,10 +320,11 @@ elif menu == "Returns Analysis":
             st.warning(f"No return data found for {symbol}.")
 
 # =========================================================
-# PAGE 4 - RETURNS COMPARISON
+# PAGE 5 - RETURNS COMPARISON
 # =========================================================
 elif menu == "Compare Returns":
     st.subheader("Compare Returns")
+
     symbols_text = st.text_input("Tickers", value="AMD,AAPL,MSFT,ORCL")
     startdate = st.date_input("Compare Start Date", value=pd.to_datetime("2019-01-01"))
     enddate = st.date_input("Compare End Date", value=pd.to_datetime("2024-11-18"))
@@ -303,7 +340,7 @@ elif menu == "Compare Returns":
         st.warning("No data found for comparison.")
 
 # =========================================================
-# PAGE 5 - PORTFOLIO ANALYTICS
+# PAGE 6 - PORTFOLIO ANALYTICS
 # =========================================================
 elif menu == "Portfolio Analytics":
     st.subheader("Portfolio Analytics")
@@ -317,7 +354,7 @@ elif menu == "Portfolio Analytics":
     prices = get_price_matrix(symbols, startdate, enddate)
 
     if not prices.empty:
-        returns = prices.pct_change().dropna()
+        returns = prices.pct_change(fill_method=None).dropna()
 
         if returns.empty:
             st.warning("Not enough return data to run portfolio analytics.")
@@ -384,14 +421,16 @@ elif menu == "Portfolio Analytics":
             ax.set_title("Monte Carlo Portfolio Simulation")
             plt.colorbar(scatter, ax=ax, label="Annualized Sharpe Ratio")
             st.pyplot(fig)
+
     else:
         st.warning("No price data found for selected tickers and dates.")
 
 # =========================================================
-# PAGE 6 - AI SQL DATABASE AGENT
+# PAGE 7 - AI SQL DATABASE AGENT
 # =========================================================
 elif menu == "AI SQL Agent":
     st.subheader("AI SQL Agent")
+
     user_prompt = st.text_area(
         "Ask a question about your market database",
         value="Show me the latest prices for all tickers"
